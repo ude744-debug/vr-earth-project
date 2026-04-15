@@ -69,7 +69,7 @@ const loader = new THREE.TextureLoader();
 // TẠO THIÊN THỂ
 // ============================================================
 
-const earthMap = loader.load('public/earth_map.jpg');
+const earthMap = loader.load('/earth_map.jpg');
 earthMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 const earth = new THREE.Mesh(
@@ -77,13 +77,13 @@ const earth = new THREE.Mesh(
 	new THREE.MeshStandardMaterial({
 		map: earthMap,
 		emissive: new THREE.Color(0xffffff),
-		emissiveMap: loader.load('public/earth_night.jpg'),
+		emissiveMap: loader.load('/earth_night.jpg'),
 		emissiveIntensity: 0.7
 	})
 );
 const clouds = new THREE.Mesh(
 	new THREE.SphereGeometry(2.02, 64, 64),
-	new THREE.MeshStandardMaterial({ map: loader.load('public/clouds.jpg'), transparent: true, opacity: 0.4 })
+	new THREE.MeshStandardMaterial({ map: loader.load('/clouds.jpg'), transparent: true, opacity: 0.4 })
 );
 const earthGroup = new THREE.Group();
 earthGroup.add(earth);
@@ -91,7 +91,7 @@ earthGroup.add(clouds);
 
 const moon = new THREE.Mesh(
 	new THREE.SphereGeometry(0.5, 32, 32),
-	new THREE.MeshStandardMaterial({ map: loader.load('public/moon.jpg') })
+	new THREE.MeshStandardMaterial({ map: loader.load('/moon.jpg') })
 );
 const moonPivot = new THREE.Object3D();
 moonPivot.add(moon);
@@ -107,7 +107,7 @@ scene.add(earthPivot);
 
 const sun = new THREE.Mesh(
 	new THREE.SphereGeometry(10, 64, 64),
-	new THREE.MeshBasicMaterial({ map: loader.load('public/sun.jpg') })
+	new THREE.MeshBasicMaterial({ map: loader.load('/sun.jpg') })
 );
 scene.add(sun);
 
@@ -118,7 +118,7 @@ scene.add(sunLight);
 
 scene.add(new THREE.Mesh(
 	new THREE.SphereGeometry(500, 64, 64),
-	new THREE.MeshBasicMaterial({ map: loader.load('public/stars.jpg'), side: THREE.BackSide })
+	new THREE.MeshBasicMaterial({ map: loader.load('/stars.jpg'), side: THREE.BackSide })
 ));
 
 // Mỗi hành tinh gồm:
@@ -147,18 +147,18 @@ function createPlanet(size, texturePath, orbitRadius) {
 	return { mesh, group, pivot, orbitRadius };
 }
 
-const mercury = createPlanet(0.8, 'public/mercury.jpg', 15);
-const venus = createPlanet(1.5, 'public/venus.jpg', 22);
-const mars = createPlanet(1.2, 'public/mars.jpg', 45);
-const jupiter = createPlanet(5, 'public/jupiter.jpg', 65);
-const saturn = createPlanet(4, 'public/saturn.jpg', 85);
-const uranus = createPlanet(3, 'public/uranus.jpg', 105);
-const neptune = createPlanet(3, 'public/neptune.jpg', 125);
+const mercury = createPlanet(0.8, '/mercury.jpg', 15);
+const venus = createPlanet(1.5, '/venus.jpg', 22);
+const mars = createPlanet(1.2, '/mars.jpg', 45);
+const jupiter = createPlanet(5, '/jupiter.jpg', 65);
+const saturn = createPlanet(4, '/saturn.jpg', 85);
+const uranus = createPlanet(3, '/uranus.jpg', 105);
+const neptune = createPlanet(3, '/neptune.jpg', 125);
 
 // Vành đai Sao Thổ — gắn vào mesh (không bị ảnh hưởng bởi group)
 const ringMesh = new THREE.Mesh(
 	new THREE.RingGeometry(5, 8, 64),
-	new THREE.MeshBasicMaterial({ map: loader.load('public/saturn_ring.png'), side: THREE.DoubleSide, transparent: true })
+	new THREE.MeshBasicMaterial({ map: loader.load('/saturn_ring.png'), side: THREE.DoubleSide, transparent: true })
 );
 ringMesh.rotation.x = Math.PI / 2;
 saturn.mesh.add(ringMesh);
