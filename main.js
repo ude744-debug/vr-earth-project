@@ -449,14 +449,17 @@ const ORBIT_SPEEDS = new Map([
 
 function animate() {
 	// Fix vấn đề 4: không render cho đến khi tất cả texture đã load
-	if (!allTexturesLoaded) return;
+	// if (!allTexturesLoaded) return;
+	
 	// Quỹ đạo: bỏ qua pivot của hành tinh đang inspect (đang bị "đóng băng" tại gốc)
-	const frozenPivot = currentPlanetData?.orbitPivot ?? null;
-	for (const [pivot, speed] of ORBIT_SPEEDS) {
-		if (pivot !== frozenPivot) pivot.rotation.y += speed;
-	}
+	if (allTexturesLoaded) {
+		const frozenPivot = currentPlanetData?.orbitPivot ?? null;
+		for (const [pivot, speed] of ORBIT_SPEEDS) {
+			if (pivot !== frozenPivot) pivot.rotation.y += speed;
+		}
 	moonPivot.rotation.y += 0.002;
-
+	}
+	
 	// Tự xoay trục
 	if (!selfRotationPaused) {
 		earth.rotation.y += 0.002;
