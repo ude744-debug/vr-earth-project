@@ -25,6 +25,9 @@ THREE.DefaultLoadingManager.onLoad = () => {
 THREE.DefaultLoadingManager.onError = (url) => {
 	console.error('Lỗi khi tải tài nguyên:', url);
 	loadingScreen.textContent = 'Lỗi tải: ' + url.split('/').pop();
+	// Vẫn cho phép chạy tiếp để không bị treo màn hình loading nếu chỉ lỗi 1-2 file ảnh
+	allTexturesLoaded = true;
+	setTimeout(() => { loadingScreen.style.display = 'none'; }, 2000);
 };
 THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
 	loadingScreen.textContent = `Đang tải... ${loaded}/${total}`;
