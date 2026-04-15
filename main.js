@@ -22,6 +22,10 @@ THREE.DefaultLoadingManager.onLoad = () => {
 	allTexturesLoaded = true;
 	loadingScreen.style.display = 'none';
 };
+THREE.DefaultLoadingManager.onError = (url) => {
+	console.error('Lỗi khi tải tài nguyên:', url);
+	loadingScreen.textContent = 'Lỗi tải: ' + url.split('/').pop();
+};
 THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
 	loadingScreen.textContent = `Đang tải... ${loaded}/${total}`;
 };
