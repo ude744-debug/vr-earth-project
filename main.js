@@ -811,7 +811,7 @@ window.addEventListener('dblclick', async (event) => {
 		const lon = (uv.x * 360) - 180;
 		const lat = (uv.y * 180) - 90;
 
-		showCountryInfo("Đang tra cứu...");
+		showCountryInfo("⏳ Đang tra cứu...");
 
 		const country = await getCountryName(lat, lon);
 
