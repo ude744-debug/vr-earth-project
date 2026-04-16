@@ -71,8 +71,8 @@ function makeLaser() {
 	const geo = new THREE.BufferGeometry().setFromPoints(points);
 	return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88ccff }));
 }
-const laser1 = makeLaser(); laser1.scale.z = 100; // Tăng độ dài tia laser để chạm tới các hành tinh
-const laser2 = makeLaser(); laser2.scale.z = 100;
+const laser1 = makeLaser(); laser1.scale.z = 0; // Mặc định ẩn/ngắn
+const laser2 = makeLaser(); laser2.scale.z = 0;
 controller1.add(laser1);
 controller2.add(laser2);
 controller1.addEventListener('selectstart', onVRTrigger);
@@ -463,6 +463,34 @@ const ORBIT_SPEEDS = new Map([
 	[neptune.pivot, 0.0004],
 ]);
 
+// Hàm cập nhật hiển thị tia laser theo va chạm
+function updateControllerLaser(controller, laser) {
+	getControllerRay(controller);
+	
+	let targets = [];
+	if (vrMenuVisible) {
+		targets = menuPanels;
+	} else if (inspectMode) {
+		// Trong chế độ soi hành tinh, tia laser nhắm vào nút dừng và hành tinh hiện tại
+		targets = [stopBtnMesh];
+		if (currentPlanetData && currentPlanetData.mesh) targets.push(currentPlanetData.mesh);
+	} else {
+		// Chế độ toàn cảnh: nhắm vào các hành tinh
+		targets = PLANETS.map(p => p.mesh).filter(m => m !== null);
+	}
+
+	const hits = raycaster.intersectObjects(targets);
+	if (hits.length > 0) {
+		// Tia laser chỉ dài đến điểm chạm
+		laser.scale.z = hits[0].distance;
+		laser.visible = true;
+	} else {
+		// Nếu không chạm gì, tia laser dài một khoảng ngắn (0.5m) hoặc ẩn đi
+		laser.scale.z = 0.5;
+		laser.visible = vrMenuVisible || inspectMode; // Chỉ hiện khi cần tương tác
+	}
+}
+
 function animate() {
 	// Fix vấn đề 4: không render cho đến khi tất cả texture đã load
 	// if (!allTexturesLoaded) return;
@@ -499,6 +527,11 @@ function animate() {
 	if (session) {
 		for (const source of session.inputSources) {
 			if (!source.gamepad) continue;
+			
+			// Cập nhật tia laser cho từng tay cầm
+			if (source.handedness === 'right') updateControllerLaser(controller1, laser1);
+			if (source.handedness === 'left') updateControllerLaser(controller2, laser2);
+
 			const axisH = source.gamepad.axes[2] ?? 0;
 			const axisV = source.gamepad.axes[3] ?? 0;
 
