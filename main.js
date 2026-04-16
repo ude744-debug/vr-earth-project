@@ -380,15 +380,16 @@ function enterInspectMode(planetData) {
 	});
 	sun.visible = false;
 
-	// local-floor reference space xử lý chiều cao mắt tự động
-	// Không cần bù eyeY thủ công nữa
+	// Trong VR (local-floor), headset tự cộng thêm chiều cao đầu (~1.6m) vào camera.
+	// Phải hạ cameraRig xuống để hành tinh nằm ngang tầm mắt, không bị lệch xuống chân.
+	const vrEyeOffset = renderer.xr.isPresenting ? -1.6 : 0;
 
 	// 2. Chỉ hiện lại hành tinh đang chọn
 	if (isSun) {
 		sun.visible = true;
 		lookTarget.set(0, 0, 0);
 		const viewDist = Math.max(radius * 3, 15);
-		cameraRig.position.set(0, 0, viewDist);
+		cameraRig.position.set(0, vrEyeOffset, viewDist);
 	} else {
 		// Hiện mesh hành tinh đang soi
 		planetData.mesh.visible = true;
@@ -401,12 +402,12 @@ function enterInspectMode(planetData) {
 		orbitPivot.rotation.set(0, 0, 0);
 		localGroup.position.set(0, 0, 0);
 
-		// Dời đèn ra sau lưng camera để soi sáng mặt trước hành tinh
-		sunLight.position.set(0, 10, 20);
-
 		lookTarget.set(0, 0, 0);
 		const viewDist = Math.max(radius * 5, 4);
-		cameraRig.position.set(0, 0, viewDist);
+		cameraRig.position.set(0, vrEyeOffset, viewDist);
+
+		// Đèn đặt CÙNG phía với camera (z dương) để chiếu sáng mặt trước hành tinh
+		sunLight.position.set(viewDist * 0.3, viewDist * 0.4, viewDist * 1.2);
 	}
 
 	inspectMode = true;
@@ -760,18 +761,24 @@ async function onVRTrigger(event) {
 
 // Cập nhật lại vị trí Rig khi trạng thái VR thay đổi
 renderer.xr.addEventListener('sessionstart', () => {
-	// local-floor reference space: camera y=0 là sàn nhà, không cần bù eyeY thủ công
-	if (inspectMode) {
-		cameraRig.position.y = 0;
+	if (inspectMode && currentPlanetData) {
+		// Re-enter inspect để tính lại vrEyeOffset và vị trí đèn
+		const pd = currentPlanetData;
+		inspectMode = false;
+		currentPlanetData = null;
+		enterInspectMode(pd);
 	} else {
-		cameraRig.position.set(0, 0, 150);
+		cameraRig.position.set(0, -1.6, 150);
+		cameraRig.lookAt(lookTarget);
 	}
-	// Xoay rig để nhìn về hành tinh/gốc tọa độ
-	cameraRig.lookAt(lookTarget);
 });
 renderer.xr.addEventListener('sessionend', () => {
-	if (inspectMode) {
-		cameraRig.position.y = 0;
+	if (inspectMode && currentPlanetData) {
+		// Re-enter inspect để tính lại vị trí không có VR offset
+		const pd = currentPlanetData;
+		inspectMode = false;
+		currentPlanetData = null;
+		enterInspectMode(pd);
 	} else {
 		cameraRig.position.set(0, 50, 150);
 	}
