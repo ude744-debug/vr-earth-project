@@ -14,18 +14,34 @@ loadingScreen.style.cssText = `
 	font-family:monospace;font-size:18px;
 	display:flex;align-items:center;justify-content:center;
 	z-index:9999;
-	pointer-events: none; /* Để không chặn click vào nút VR bên dưới nếu có lỗi */
+	pointer-events: none;
 `;
 loadingScreen.textContent = 'Đang tải...';
 document.body.appendChild(loadingScreen);
 
-THREE.DefaultLoadingManager.onLoad = () => {
+function markLoaded() {
 	allTexturesLoaded = true;
 	loadingScreen.style.display = 'none';
+}
+
+THREE.DefaultLoadingManager.onLoad = () => {
+	markLoaded();
+};
+THREE.DefaultLoadingManager.onError = (url) => {
+	console.warn('Texture load error:', url);
+	// Vẫn tiếp tục render dù texture lỗi
 };
 THREE.DefaultLoadingManager.onProgress = (url, loaded, total) => {
 	loadingScreen.textContent = `Đang tải... ${loaded}/${total}`;
 };
+
+// Fallback: nếu sau 10 giây texture vẫn chưa load xong thì vẫn bật scene
+setTimeout(() => {
+	if (!allTexturesLoaded) {
+		console.warn('Texture timeout — forcing scene start');
+		markLoaded();
+	}
+}, 10000);
 
 // ============================================================
 // SCENE, CAMERA, RENDERER
@@ -43,6 +59,7 @@ const lookTarget = new THREE.Vector3(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -63,6 +80,8 @@ controller2.addEventListener('selectstart', onVRTrigger);
 controller1.addEventListener('squeezestart', onVRGrip);
 controller2.addEventListener('squeezestart', onVRGrip);
 scene.add(controller1, controller2);
+
+document.body.appendChild(VRButton.createButton(renderer));
 
 const loader = new THREE.TextureLoader();
 
@@ -361,17 +380,15 @@ function enterInspectMode(planetData) {
 	});
 	sun.visible = false;
 
-	// Chiều cao mắt: Trong VR (local-floor), camera thường ở y=1.6. 
-	// Để hành tinh ở ngang tầm mắt, ta hạ Rig xuống -1.6.
-	// Nếu không ở VR, ta để Rig ở 0.
-	const eyeY = renderer.xr.isPresenting ? 1.6 : 0;
+	// local-floor reference space xử lý chiều cao mắt tự động
+	// Không cần bù eyeY thủ công nữa
 
 	// 2. Chỉ hiện lại hành tinh đang chọn
 	if (isSun) {
 		sun.visible = true;
 		lookTarget.set(0, 0, 0);
 		const viewDist = Math.max(radius * 3, 15);
-		cameraRig.position.set(0, -eyeY, viewDist);
+		cameraRig.position.set(0, 0, viewDist);
 	} else {
 		// Hiện mesh hành tinh đang soi
 		planetData.mesh.visible = true;
@@ -389,7 +406,7 @@ function enterInspectMode(planetData) {
 
 		lookTarget.set(0, 0, 0);
 		const viewDist = Math.max(radius * 5, 4);
-		cameraRig.position.set(0, -eyeY, viewDist);
+		cameraRig.position.set(0, 0, viewDist);
 	}
 
 	inspectMode = true;
@@ -421,8 +438,7 @@ function exitInspectMode() {
 	currentPlanetData = null;
 	lookTarget.set(0, 0, 0);
 
-	const eyeY = renderer.xr.isPresenting ? 1.6 : 0;
-	cameraRig.position.set(0, 50 - eyeY, 150);
+	cameraRig.position.set(0, 50, 150);
 
 	showStatus('Toàn cảnh');
 	sunLight.position.set(0, 0, 0);
@@ -744,17 +760,20 @@ async function onVRTrigger(event) {
 
 // Cập nhật lại vị trí Rig khi trạng thái VR thay đổi
 renderer.xr.addEventListener('sessionstart', () => {
+	// local-floor reference space: camera y=0 là sàn nhà, không cần bù eyeY thủ công
 	if (inspectMode) {
-		cameraRig.position.y = -1.6;
+		cameraRig.position.y = 0;
 	} else {
-		cameraRig.position.y = 50 - 1.6;
+		cameraRig.position.set(0, 0, 150);
 	}
+	// Xoay rig để nhìn về hành tinh/gốc tọa độ
+	cameraRig.lookAt(lookTarget);
 });
 renderer.xr.addEventListener('sessionend', () => {
 	if (inspectMode) {
 		cameraRig.position.y = 0;
 	} else {
-		cameraRig.position.y = 50;
+		cameraRig.position.set(0, 50, 150);
 	}
 });
 
@@ -764,7 +783,6 @@ window.addEventListener('resize', () => {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-document.body.appendChild(VRButton.createButton(renderer));
 window.addEventListener('dblclick', async (event) => {
 	if (!inspectMode || !currentPlanetData || currentPlanetData.mesh !== earth || !selfRotationPaused) return;
 
