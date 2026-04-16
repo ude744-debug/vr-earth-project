@@ -66,15 +66,17 @@ document.body.appendChild(renderer.domElement);
 // VR Controllers
 const controller1 = renderer.xr.getController(0);
 const controller2 = renderer.xr.getController(1);
-function makeLaser() {
-	const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)];
-	const geo = new THREE.BufferGeometry().setFromPoints(points);
-	return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88ccff }));
-}
-const laser1 = makeLaser(); laser1.scale.z = 0; // Mặc định ẩn/ngắn
-const laser2 = makeLaser(); laser2.scale.z = 0;
-controller1.add(laser1);
-controller2.add(laser2);
+// function makeLaser() {
+// 	const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)];
+// 	const geo = new THREE.BufferGeometry().setFromPoints(points);
+// 	return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88ccff }));
+// }
+// const laser1 = makeLaser(); laser1.scale.z = 100; // Tăng độ dài tia laser để chạm tới các hành tinh
+// const laser2 = makeLaser(); laser2.scale.z = 100;
+// const laser1 = makeLaser(); laser1.scale.z = 0; // Mặc định ẩn/ngắn
+// const laser2 = makeLaser(); laser2.scale.z = 0;
+// controller1.add(laser1);
+// controller2.add(laser2);
 controller1.addEventListener('selectstart', onVRTrigger);
 controller2.addEventListener('selectstart', onVRTrigger);
 controller1.addEventListener('squeezestart', onVRGrip);
@@ -529,8 +531,8 @@ function animate() {
 			if (!source.gamepad) continue;
 			
 			// Cập nhật tia laser cho từng tay cầm
-			if (source.handedness === 'right') updateControllerLaser(controller1, laser1);
-			if (source.handedness === 'left') updateControllerLaser(controller2, laser2);
+			// if (source.handedness === 'right') updateControllerLaser(controller1, laser1);
+			// if (source.handedness === 'left') updateControllerLaser(controller2, laser2);
 
 			const axisH = source.gamepad.axes[2] ?? 0;
 			const axisV = source.gamepad.axes[3] ?? 0;
