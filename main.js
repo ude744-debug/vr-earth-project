@@ -96,9 +96,9 @@ const earth = new THREE.Mesh(
 	new THREE.SphereGeometry(2, 64, 64),
 	new THREE.MeshStandardMaterial({
 		map: earthMap,
-		emissive: new THREE.Color(0x222244),
+		emissive: new THREE.Color(0xffffff),
 		emissiveMap: loader.load('/earth_night.jpg'),
-		emissiveIntensity: 0.3
+		emissiveIntensity: 1.0
 	})
 );
 const clouds = new THREE.Mesh(
