@@ -96,9 +96,9 @@ const earth = new THREE.Mesh(
 	new THREE.SphereGeometry(2, 64, 64),
 	new THREE.MeshStandardMaterial({
 		map: earthMap,
-		emissive: new THREE.Color(0x222244),
+		emissive: new THREE.Color(0xffffff),
 		emissiveMap: loader.load('/earth_night.jpg'),
-		emissiveIntensity: 0.3
+		emissiveIntensity: 0.7
 	})
 );
 const clouds = new THREE.Mesh(
@@ -131,8 +131,8 @@ const sun = new THREE.Mesh(
 );
 scene.add(sun);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.15));
-const sunLight = new THREE.PointLight(0xffffff, 2, 1000);
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const sunLight = new THREE.PointLight(0xffffff, 5, 1000);
 sunLight.decay = 0;
 scene.add(sunLight);
 
@@ -152,6 +152,8 @@ function createPlanet(size, texturePath, orbitRadius) {
 		new THREE.SphereGeometry(size, 64, 64),
 		new THREE.MeshStandardMaterial({
 			map: loader.load(texturePath),
+			emissive: new THREE.Color(0xffffff),
+			emissiveIntensity: 0.1
 		})
 	);
 	const group = new THREE.Group();
@@ -386,7 +388,7 @@ function enterInspectMode(planetData) {
 	if (isSun) {
 		sun.visible = true;
 		lookTarget.set(0, 0, 0);
-		const viewDist = radius * 2.5 + 1.5;
+		const viewDist = Math.max(radius * 3, 15);
 		cameraRig.position.set(0, vrEyeOffset, viewDist);
 	} else {
 		// Hiện mesh hành tinh đang soi
@@ -401,7 +403,7 @@ function enterInspectMode(planetData) {
 		localGroup.position.set(0, 0, 0);
 
 		lookTarget.set(0, 0, 0);
-		const viewDist = radius * 2.5 + 1.5;
+		const viewDist = Math.max(radius * 5, 4);
 		cameraRig.position.set(0, vrEyeOffset, viewDist);
 
 		// Đèn đặt CÙNG phía với camera (z dương) để chiếu sáng mặt trước hành tinh
@@ -809,7 +811,7 @@ window.addEventListener('dblclick', async (event) => {
 		const lon = (uv.x * 360) - 180;
 		const lat = (uv.y * 180) - 90;
 
-		showCountryInfo("⏳ Đang tra cứu...");
+		showCountryInfo("Đang tra cứu...");
 
 		const country = await getCountryName(lat, lon);
 
