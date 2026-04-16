@@ -4,6 +4,12 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 const raycaster = new THREE.Raycaster();
 const tempMatrix = new THREE.Matrix4();
 
+const pointerDot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.015),
+    new THREE.MeshBasicMaterial({ color: 0x88ccff })
+);
+pointerDot.visible = false;
+scene.add(pointerDot);
 // ============================================================
 // LOADING MANAGER — fix vấn đề 4: tránh màn hình xám lúc đầu
 // ============================================================
@@ -466,31 +472,53 @@ const ORBIT_SPEEDS = new Map([
 ]);
 
 // Hàm cập nhật hiển thị tia laser theo va chạm
-function updateControllerLaser(controller, laser) {
-	getControllerRay(controller);
+// function updateControllerLaser(controller, laser) {
+// 	getControllerRay(controller);
 	
-	let targets = [];
-	if (vrMenuVisible) {
-		targets = menuPanels;
-	} else if (inspectMode) {
-		// Trong chế độ soi hành tinh, tia laser nhắm vào nút dừng và hành tinh hiện tại
-		targets = [stopBtnMesh];
-		if (currentPlanetData && currentPlanetData.mesh) targets.push(currentPlanetData.mesh);
-	} else {
-		// Chế độ toàn cảnh: nhắm vào các hành tinh
-		targets = PLANETS.map(p => p.mesh).filter(m => m !== null);
-	}
+// 	let targets = [];
+// 	if (vrMenuVisible) {
+// 		targets = menuPanels;
+// 	} else if (inspectMode) {
+// 		// Trong chế độ soi hành tinh, tia laser nhắm vào nút dừng và hành tinh hiện tại
+// 		targets = [stopBtnMesh];
+// 		if (currentPlanetData && currentPlanetData.mesh) targets.push(currentPlanetData.mesh);
+// 	} else {
+// 		// Chế độ toàn cảnh: nhắm vào các hành tinh
+// 		targets = PLANETS.map(p => p.mesh).filter(m => m !== null);
+// 	}
 
-	const hits = raycaster.intersectObjects(targets);
-	if (hits.length > 0) {
-		// Tia laser chỉ dài đến điểm chạm
-		laser.scale.z = hits[0].distance;
-		laser.visible = true;
-	} else {
-		// Nếu không chạm gì, tia laser dài một khoảng ngắn (0.5m) hoặc ẩn đi
-		laser.scale.z = 0.5;
-		laser.visible = vrMenuVisible || inspectMode; // Chỉ hiện khi cần tương tác
-	}
+// 	const hits = raycaster.intersectObjects(targets);
+// 	if (hits.length > 0) {
+// 		// Tia laser chỉ dài đến điểm chạm
+// 		laser.scale.z = hits[0].distance;
+// 		laser.visible = true;
+// 	} else {
+// 		// Nếu không chạm gì, tia laser dài một khoảng ngắn (0.5m) hoặc ẩn đi
+// 		laser.scale.z = 0.5;
+// 		laser.visible = vrMenuVisible || inspectMode; // Chỉ hiện khi cần tương tác
+// 	}
+// }
+function updateControllerPointer(controller) {
+    getControllerRay(controller);
+
+    let targets = [];
+    if (vrMenuVisible) {
+        targets = menuPanels;
+    } else if (inspectMode) {
+        targets = [stopBtnMesh];
+        if (currentPlanetData?.mesh) targets.push(currentPlanetData.mesh);
+    } else {
+        targets = PLANETS.map(p => p.mesh).filter(m => m);
+    }
+
+    const hits = raycaster.intersectObjects(targets);
+
+    if (hits.length > 0) {
+        pointerDot.position.copy(hits[0].point);
+        pointerDot.visible = true;
+    } else {
+        pointerDot.visible = false;
+    }
 }
 
 function animate() {
@@ -533,6 +561,8 @@ function animate() {
 			// Cập nhật tia laser cho từng tay cầm
 			// if (source.handedness === 'right') updateControllerLaser(controller1, laser1);
 			// if (source.handedness === 'left') updateControllerLaser(controller2, laser2);
+			updateControllerPointer(controller1);
+			updateControllerPointer(controller2);
 
 			const axisH = source.gamepad.axes[2] ?? 0;
 			const axisV = source.gamepad.axes[3] ?? 0;
