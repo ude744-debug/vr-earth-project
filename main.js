@@ -4,12 +4,6 @@ import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 const raycaster = new THREE.Raycaster();
 const tempMatrix = new THREE.Matrix4();
 
-const pointerDot = new THREE.Mesh(
-    new THREE.SphereGeometry(0.015),
-    new THREE.MeshBasicMaterial({ color: 0x88ccff })
-);
-pointerDot.visible = false;
-scene.add(pointerDot);
 // ============================================================
 // LOADING MANAGER — fix vấn đề 4: tránh màn hình xám lúc đầu
 // ============================================================
@@ -54,6 +48,12 @@ setTimeout(() => {
 // ============================================================
 
 const scene = new THREE.Scene();
+const pointerDot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.015),
+    new THREE.MeshBasicMaterial({ color: 0x88ccff })
+);
+pointerDot.visible = false;
+scene.add(pointerDot);
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
 const cameraRig = new THREE.Group();
@@ -562,7 +562,6 @@ function animate() {
 			// if (source.handedness === 'right') updateControllerLaser(controller1, laser1);
 			// if (source.handedness === 'left') updateControllerLaser(controller2, laser2);
 			updateControllerPointer(controller1);
-			updateControllerPointer(controller2);
 
 			const axisH = source.gamepad.axes[2] ?? 0;
 			const axisV = source.gamepad.axes[3] ?? 0;
