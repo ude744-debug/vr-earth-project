@@ -71,8 +71,8 @@ function makeLaser() {
 	const geo = new THREE.BufferGeometry().setFromPoints(points);
 	return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88ccff }));
 }
-const laser1 = makeLaser(); laser1.scale.z = 10;
-const laser2 = makeLaser(); laser2.scale.z = 10;
+const laser1 = makeLaser(); laser1.scale.z = 100; // Tăng độ dài tia laser để chạm tới các hành tinh
+const laser2 = makeLaser(); laser2.scale.z = 100;
 controller1.add(laser1);
 controller2.add(laser2);
 controller1.addEventListener('selectstart', onVRTrigger);
@@ -589,11 +589,10 @@ window.addEventListener('mousemove', (e) => {
 // ============================================================
 
 let vrMenuVisible = false;
-// Dùng cameraGroup riêng để gắn menu — menu sẽ luôn cùng kích thước với camera
 const vrMenuGroup = new THREE.Group();
 camera.add(vrMenuGroup); // Gắn trực tiếp vào camera để ghim màn hình
 
-function makeTextSprite(text, options = {}) {
+function makeTextPanel(text, options = {}) {
 	const {
 		fontSize = 56, bgColor = 'rgba(10,20,40,0.92)',
 		textColor = '#ffffff', borderColor = '#7df',
@@ -617,10 +616,9 @@ function makeTextSprite(text, options = {}) {
 	ctx.textBaseline = 'middle';
 	ctx.fillText(text, width / 2, height / 2);
 	const tex = new THREE.CanvasTexture(canvas);
-	const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
-	const sprite = new THREE.Sprite(mat);
-	sprite.scale.set(width / height * 0.35, 0.35, 1);
-	return sprite;
+	const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false });
+	const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+	return mesh;
 }
 
 const MENU_ITEMS = [
@@ -642,14 +640,14 @@ const MENU_ITEM_SCALE_X = 0.6; // Bạn có thể tăng/giảm kích thước n�
 const MENU_ITEM_SCALE_Y = 0.08;
 const MENU_ROW_GAP = 0.065;
 
-const menuSprites = MENU_ITEMS.map((item, i) => {
-	const sprite = makeTextSprite(item.label, { fontSize: 64 });
+const menuPanels = MENU_ITEMS.map((item, i) => {
+	const panel = makeTextPanel(item.label, { fontSize: 64 });
 	const row = MENU_ITEMS.length - 1 - i;
-	sprite.position.set(0, (row * MENU_ROW_GAP) - (MENU_ITEMS.length * MENU_ROW_GAP) / 2 + MENU_ROW_GAP / 2, 0);
-	sprite.scale.set(MENU_ITEM_SCALE_X, MENU_ITEM_SCALE_Y, 1);
-	sprite.userData.menuIndex = i;
-	vrMenuGroup.add(sprite);
-	return sprite;
+	panel.position.set(0, (row * MENU_ROW_GAP) - (MENU_ITEMS.length * MENU_ROW_GAP) / 2 + MENU_ROW_GAP / 2, 0);
+	panel.scale.set(MENU_ITEM_SCALE_X, MENU_ITEM_SCALE_Y, 1);
+	panel.userData.menuIndex = i;
+	vrMenuGroup.add(panel);
+	return panel;
 });
 
 // Vị trí menu: X=0 (căn giữa), Y=0, Z=-1.2 (trước mặt)
@@ -683,29 +681,29 @@ function onVRGrip() {
 const STOPBTN_SCALE_X = 0.7;
 const STOPBTN_SCALE_Y = 0.12;
 
-let stopBtnSprite = makeTextSprite('Dừng xoay', {
+let stopBtnMesh = makeTextPanel('Dừng xoay', {
 	fontSize: 70, 
 	bgColor: 'rgba(40,10,10,0.9)', borderColor: '#cc4444',
 });
 // Ghim vị trí giữa (X=0), thấp hơn nữa (Y=-0.8), trước mặt (Z=-1.1)
-stopBtnSprite.position.set(0, -0.8, -1.1);
-stopBtnSprite.scale.set(STOPBTN_SCALE_X, STOPBTN_SCALE_Y, 1);
-stopBtnSprite.visible = false;
-camera.add(stopBtnSprite); // Gắn vào camera
+stopBtnMesh.position.set(0, -0.8, -1.1);
+stopBtnMesh.scale.set(STOPBTN_SCALE_X, STOPBTN_SCALE_Y, 1);
+stopBtnMesh.visible = false;
+camera.add(stopBtnMesh); // Gắn vào camera
 
 function updateStopBtn() {
 	const shouldShow = inspectMode && renderer.xr.isPresenting;
-	stopBtnSprite.visible = shouldShow;
+	stopBtnMesh.visible = shouldShow;
 	if (!shouldShow) return;
 
 	const label = selfRotationPaused ? 'Tiếp tục xoay' : 'Dừng xoay';
 	const bgCol = selfRotationPaused ? 'rgba(10,40,10,0.9)' : 'rgba(40,10,10,0.9)';
 	const bdCol = selfRotationPaused ? '#44cc44' : '#cc4444';
-	const tmp = makeTextSprite(label, { fontSize: 70, bgColor: bgCol, borderColor: bdCol });
-	stopBtnSprite.scale.set(STOPBTN_SCALE_X, STOPBTN_SCALE_Y, 1);
-	stopBtnSprite.material.map.dispose();
-	stopBtnSprite.material.map = tmp.material.map;
-	stopBtnSprite.material.needsUpdate = true;
+	const tmp = makeTextPanel(label, { fontSize: 70, bgColor: bgCol, borderColor: bdCol });
+	stopBtnMesh.scale.set(STOPBTN_SCALE_X, STOPBTN_SCALE_Y, 1);
+	stopBtnMesh.material.map.dispose();
+	stopBtnMesh.material.map = tmp.material.map;
+	stopBtnMesh.material.needsUpdate = true;
 }
 
 // ============================================================
@@ -726,7 +724,7 @@ async function onVRTrigger(event) {
 	getControllerRay(controller);
 
 	if (vrMenuVisible) {
-		const hits = raycaster.intersectObjects(menuSprites);
+		const hits = raycaster.intersectObjects(menuPanels);
 		if (hits.length > 0) {
 			const idx = hits[0].object.userData.menuIndex;
 			MENU_ITEMS[idx].action();
@@ -736,7 +734,7 @@ async function onVRTrigger(event) {
 	}
 
 	if (inspectMode) {
-		const hitBtn = raycaster.intersectObject(stopBtnSprite);
+		const hitBtn = raycaster.intersectObject(stopBtnMesh);
 		if (hitBtn.length > 0) {
 			selfRotationPaused = !selfRotationPaused;
 			spinVelocity = 0;
