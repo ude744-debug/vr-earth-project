@@ -638,9 +638,9 @@ const MENU_ITEMS = [
 ];
 
 // Thông số để đạt chiều cao 2/3 màn hình và ghim bên phải
-const MENU_ITEM_SCALE_X = 0.6;
+const MENU_ITEM_SCALE_X = 0.6; // Bạn có thể tăng/giảm kích thước này nếu muốn menu to hơn
 const MENU_ITEM_SCALE_Y = 0.08;
-const MENU_ROW_GAP = 0.065; 
+const MENU_ROW_GAP = 0.065;
 
 const menuSprites = MENU_ITEMS.map((item, i) => {
 	const sprite = makeTextSprite(item.label, { fontSize: 64 });
@@ -652,8 +652,8 @@ const menuSprites = MENU_ITEMS.map((item, i) => {
 	return sprite;
 });
 
-// Vị trí menu: X=1.0 (dịch sang phải nhiều hơn), Y=0, Z=-1.2 (trước mặt)
-vrMenuGroup.position.set(1.0, 0, -1.2);
+// Vị trí menu: X=0 (căn giữa), Y=0, Z=-1.2 (trước mặt)
+vrMenuGroup.position.set(0, 0, -1.2);
 vrMenuGroup.visible = false;
 
 // Khoảng cách menu cố định trước mặt camera (đơn vị world space)
