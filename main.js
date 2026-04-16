@@ -48,12 +48,19 @@ setTimeout(() => {
 // ============================================================
 
 const scene = new THREE.Scene();
-const pointerDot = new THREE.Mesh(
-    new THREE.SphereGeometry(0.015),
-    new THREE.MeshBasicMaterial({ color: 0x88ccff })
+const pointerDot1 = new THREE.Mesh(
+	new THREE.SphereGeometry(0.015),
+	new THREE.MeshBasicMaterial({ color: 0x88ccff })
 );
-pointerDot.visible = false;
-scene.add(pointerDot);
+pointerDot1.visible = false;
+scene.add(pointerDot1);
+
+const pointerDot2 = new THREE.Mesh(
+	new THREE.SphereGeometry(0.015),
+	new THREE.MeshBasicMaterial({ color: 0xff8844 })
+);
+pointerDot2.visible = false;
+scene.add(pointerDot2);
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
 const cameraRig = new THREE.Group();
@@ -474,7 +481,7 @@ const ORBIT_SPEEDS = new Map([
 // Hàm cập nhật hiển thị tia laser theo va chạm
 // function updateControllerLaser(controller, laser) {
 // 	getControllerRay(controller);
-	
+
 // 	let targets = [];
 // 	if (vrMenuVisible) {
 // 		targets = menuPanels;
@@ -498,42 +505,42 @@ const ORBIT_SPEEDS = new Map([
 // 		laser.visible = vrMenuVisible || inspectMode; // Chỉ hiện khi cần tương tác
 // 	}
 // }
-function updateControllerPointer(controller) {
-    getControllerRay(controller);
+function updateControllerPointer(controller, dot) {
+	getControllerRay(controller);
 
-    let targets = [];
-    if (vrMenuVisible) {
-        targets = menuPanels;
-    } else if (inspectMode) {
-        targets = [stopBtnMesh];
-        if (currentPlanetData?.mesh) targets.push(currentPlanetData.mesh);
-    } else {
-        targets = PLANETS.map(p => p.mesh).filter(m => m);
-    }
+	let targets = [];
+	if (vrMenuVisible) {
+		targets = menuPanels;
+	} else if (inspectMode) {
+		targets = [stopBtnMesh];
+		if (currentPlanetData?.mesh) targets.push(currentPlanetData.mesh);
+	} else {
+		targets = PLANETS.map(p => p.mesh).filter(m => m);
+	}
 
-    const hits = raycaster.intersectObjects(targets);
+	const hits = raycaster.intersectObjects(targets);
 
-    if (hits.length > 0) {
-        pointerDot.position.copy(hits[0].point);
-        pointerDot.visible = true;
-    } else {
-        pointerDot.visible = false;
-    }
+	if (hits.length > 0) {
+		dot.position.copy(hits[0].point);
+		dot.visible = true;
+	} else {
+		dot.visible = false;
+	}
 }
 
 function animate() {
 	// Fix vấn đề 4: không render cho đến khi tất cả texture đã load
 	// if (!allTexturesLoaded) return;
-	
+
 	// Quỹ đạo: bỏ qua pivot của hành tinh đang inspect (đang bị "đóng băng" tại gốc)
 	if (allTexturesLoaded) {
 		const frozenPivot = currentPlanetData?.orbitPivot ?? null;
 		for (const [pivot, speed] of ORBIT_SPEEDS) {
 			if (pivot !== frozenPivot) pivot.rotation.y += speed;
 		}
-	moonPivot.rotation.y += 0.002;
+		moonPivot.rotation.y += 0.002;
 	}
-	
+
 	// Tự xoay trục
 	if (!selfRotationPaused) {
 		earth.rotation.y += 0.002;
@@ -557,11 +564,16 @@ function animate() {
 	if (session) {
 		for (const source of session.inputSources) {
 			if (!source.gamepad) continue;
-			
+
 			// Cập nhật tia laser cho từng tay cầm
 			// if (source.handedness === 'right') updateControllerLaser(controller1, laser1);
 			// if (source.handedness === 'left') updateControllerLaser(controller2, laser2);
-			updateControllerPointer(controller1);
+			if (source.handedness === 'right') {
+				updateControllerPointer(controller1, pointerDot1);
+			}
+			if (source.handedness === 'left') {
+				updateControllerPointer(controller2, pointerDot2);
+			}
 
 			const axisH = source.gamepad.axes[2] ?? 0;
 			const axisV = source.gamepad.axes[3] ?? 0;
@@ -686,17 +698,17 @@ function makeTextPanel(text, options = {}) {
 }
 
 const MENU_ITEMS = [
-	{ label: 'Mặt Trời',        action: () => enterInspectMode(PLANETS[0]) },
-	{ label: 'Sao Thủy',        action: () => enterInspectMode(PLANETS[1]) },
-	{ label: 'Sao Kim',         action: () => enterInspectMode(PLANETS[2]) },
-	{ label: 'Trái Đất',        action: () => enterInspectMode(PLANETS[3]) },
-	{ label: 'Sao Hỏa',         action: () => enterInspectMode(PLANETS[4]) },
-	{ label: 'Sao Mộc',         action: () => enterInspectMode(PLANETS[5]) },
-	{ label: 'Sao Thổ',         action: () => enterInspectMode(PLANETS[6]) },
+	{ label: 'Mặt Trời', action: () => enterInspectMode(PLANETS[0]) },
+	{ label: 'Sao Thủy', action: () => enterInspectMode(PLANETS[1]) },
+	{ label: 'Sao Kim', action: () => enterInspectMode(PLANETS[2]) },
+	{ label: 'Trái Đất', action: () => enterInspectMode(PLANETS[3]) },
+	{ label: 'Sao Hỏa', action: () => enterInspectMode(PLANETS[4]) },
+	{ label: 'Sao Mộc', action: () => enterInspectMode(PLANETS[5]) },
+	{ label: 'Sao Thổ', action: () => enterInspectMode(PLANETS[6]) },
 	{ label: 'Sao Thiên Vương', action: () => enterInspectMode(PLANETS[7]) },
-	{ label: 'Sao Hải Vương',   action: () => enterInspectMode(PLANETS[8]) },
-	{ label: 'Mặt Trăng',       action: () => enterInspectMode(PLANETS[9]) },
-	{ label: 'Toàn Cảnh',       action: () => exitInspectMode() },
+	{ label: 'Sao Hải Vương', action: () => enterInspectMode(PLANETS[8]) },
+	{ label: 'Mặt Trăng', action: () => enterInspectMode(PLANETS[9]) },
+	{ label: 'Toàn Cảnh', action: () => exitInspectMode() },
 ];
 
 // Thông số để đạt chiều cao 2/3 màn hình và ghim bên phải
@@ -746,7 +758,7 @@ const STOPBTN_SCALE_X = 0.7;
 const STOPBTN_SCALE_Y = 0.12;
 
 let stopBtnMesh = makeTextPanel('Dừng xoay', {
-	fontSize: 70, 
+	fontSize: 70,
 	bgColor: 'rgba(40,10,10,0.9)', borderColor: '#cc4444',
 });
 // Ghim vị trí giữa (X=0), thấp hơn nữa (Y=-0.8), trước mặt (Z=-1.1)
