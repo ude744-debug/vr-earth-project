@@ -14,6 +14,7 @@ loadingScreen.style.cssText = `
 	font-family:monospace;font-size:18px;
 	display:flex;align-items:center;justify-content:center;
 	z-index:9999;
+	pointer-events: none; /* Để không chặn click vào nút VR bên dưới nếu có lỗi */
 `;
 loadingScreen.textContent = 'Đang tải...';
 document.body.appendChild(loadingScreen);
@@ -360,8 +361,9 @@ function enterInspectMode(planetData) {
 	});
 	sun.visible = false;
 
-	// Tính offset chiều cao mắt VR — dùng chung cho cả hai nhánh
-	// eyeY bù lại chiều cao headset để hành tinh nằm đúng trung tâm tầm nhìn
+	// Chiều cao mắt: Trong VR (local-floor), camera thường ở y=1.6. 
+	// Để hành tinh ở ngang tầm mắt, ta hạ Rig xuống -1.6.
+	// Nếu không ở VR, ta để Rig ở 0.
 	const eyeY = renderer.xr.isPresenting ? 1.6 : 0;
 
 	// 2. Chỉ hiện lại hành tinh đang chọn
@@ -419,7 +421,6 @@ function exitInspectMode() {
 	currentPlanetData = null;
 	lookTarget.set(0, 0, 0);
 
-	// Bù chiều cao mắt VR khi quay về toàn cảnh
 	const eyeY = renderer.xr.isPresenting ? 1.6 : 0;
 	cameraRig.position.set(0, 50 - eyeY, 150);
 
@@ -496,7 +497,10 @@ function animate() {
 		}
 	}
 
-	updateCameraLook();
+	// QUAN TRỌNG: Chỉ dùng lookAt khi không ở trong VR
+	if (!renderer.xr.isPresenting) {
+		updateCameraLook();
+	}
 
 	renderer.render(scene, camera);
 }
@@ -626,7 +630,7 @@ const MENU_ROW_GAP = 0.065;
 const menuSprites = MENU_ITEMS.map((item, i) => {
 	const sprite = makeTextSprite(item.label, { fontSize: 64 });
 	const row = MENU_ITEMS.length - 1 - i;
-	sprite.position.set(0, row * MENU_ROW_GAP - (MENU_ITEMS.length * MENU_ROW_GAP) / 2 + MENU_ROW_GAP / 2, 0);
+	sprite.position.set(0, (row * MENU_ROW_GAP) - (MENU_ITEMS.length * MENU_ROW_GAP) / 2 + MENU_ROW_GAP / 2, 0);
 	sprite.scale.set(MENU_ITEM_SCALE_X, MENU_ITEM_SCALE_Y, 1);
 	sprite.userData.menuIndex = i;
 	vrMenuGroup.add(sprite);
@@ -737,6 +741,22 @@ async function onVRTrigger(event) {
 		}
 	}
 }
+
+// Cập nhật lại vị trí Rig khi trạng thái VR thay đổi
+renderer.xr.addEventListener('sessionstart', () => {
+	if (inspectMode) {
+		cameraRig.position.y = -1.6;
+	} else {
+		cameraRig.position.y = 50 - 1.6;
+	}
+});
+renderer.xr.addEventListener('sessionend', () => {
+	if (inspectMode) {
+		cameraRig.position.y = 0;
+	} else {
+		cameraRig.position.y = 50;
+	}
+});
 
 window.addEventListener('resize', () => {
 	camera.aspect = window.innerWidth / window.innerHeight;
